@@ -1,0 +1,20 @@
+[
+    {
+        "tipo": "perro",
+        "nombre": "flavio",
+        "peso": 16.0,
+        "edad": 4
+    },
+    {
+        "tipo": "gato",
+        "nombre": "flavio",
+        "peso": 4.0,
+        "edad": 5
+    },
+    {
+        "tipo": "gato",
+        "nombre": "1234",
+        "peso": 4568.0,
+        "edad": 55
+    }
+]
