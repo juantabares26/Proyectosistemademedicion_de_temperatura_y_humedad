@@ -16,5 +16,12 @@
         "nombre": "1234",
         "peso": 4568.0,
         "edad": 55
+    },
+    {
+        "tipo": "gato",
+        "raza": "Genérico",
+        "nombre": "julien",
+        "peso": 1.2,
+        "edad": 3
     }
 ]
