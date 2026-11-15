@@ -22,8 +22,8 @@ class GestorRazas:
             ws_gatos.append(["Raza", "Temp_Min", "Temp_Max", "Humedad_Min", "Humedad_Max"])
 
             # Añadimos una raza "Genérica" por defecto para que no esté vacío
-            ws_perros.append(["Genérico", 18, 26, 30, 70])
-            ws_gatos.append(["Genérico", 20, 26, 30, 70])
+            ws_perros.append(["Criollo", 18, 26, 30, 70])
+            ws_gatos.append(["Criollo", 20, 26, 30, 70])
 
             wb.save(self.archivo)
 

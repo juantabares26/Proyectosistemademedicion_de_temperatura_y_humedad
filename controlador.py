@@ -17,9 +17,9 @@ class ControladorAplicacion:
         return self.gestor_razas.obtener_razas(especie)
 
     def obtener_lista_mascotas(self):
-        # Devuelve solo los nombres para llenar el menú desplegable
+        # AHORA FORMATEAMOS EL TEXTO: "Nombre - especie"
         mascotas = self.gestor_mascotas.listar_mascotas()
-        return [m["nombre"] for m in mascotas]
+        return [f"{m['nombre']} - {m['tipo']}" for m in mascotas]
 
     def verificar_nombre_existente(self, nombre, especie):
         return self.gestor_mascotas.buscar_por_nombre(nombre, especie) is not None
@@ -44,20 +44,24 @@ class ControladorAplicacion:
     def registrar_raza(self, especie, raza, t_min, t_max, h_min, h_max):
         self.gestor_razas.agregar_raza(especie, raza, t_min, t_max, h_min, h_max)
 
-    def simular_monitoreo(self, nombre_mascota):
-        """Simula una lectura y la evalúa contra los parámetros de la mascota."""
-        # 1. Buscar los datos en el JSON
-        datos = self.gestor_mascotas.buscar_por_nombre(nombre_mascota)
+    def actualizar_datos_mascota(self, nombre_formateado, peso, edad):
+        # Extraemos el nombre original cortando por el guión ("Firulais - perro" -> "Firulais")
+        nombre = nombre_formateado.rsplit(" - ", 1)[0]
+        self.gestor_mascotas.actualizar_mascota(nombre, peso, edad)
+
+    def simular_monitoreo(self, nombre_formateado):
+        # Extraemos el nombre original antes de buscar en la base de datos
+        nombre = nombre_formateado.rsplit(" - ", 1)[0]
+
+        datos = self.gestor_mascotas.buscar_por_nombre(nombre)
         if not datos:
             raise ValueError("Mascota no encontrada en el sistema.")
 
-        # 2. Reconstruir el objeto para tener acceso a sus rangos
         if datos["tipo"] == "perro":
-            animal = Perro(datos["nombre"], datos["peso"], datos["edad"], datos.get("raza", "Genérico"))
+            animal = Perro(datos["nombre"], datos["peso"], datos["edad"], datos.get("raza", "Criollo"))
         else:
-            animal = Gato(datos["nombre"], datos["peso"], datos["edad"], datos.get("raza", "Genérico"))
+            animal = Gato(datos["nombre"], datos["peso"], datos["edad"], datos.get("raza", "Criollo"))
 
-        # 3. Simular clima y evaluar
         mediciones = self.sensor.leer_mediciones()
         evaluacion = self.evaluador.evaluar_ambiente(animal, mediciones)
 

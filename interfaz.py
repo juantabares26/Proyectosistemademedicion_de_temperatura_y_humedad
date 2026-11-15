@@ -6,7 +6,7 @@ from controlador import ControladorAplicacion
 class VentanaConfiguracion(tk.Toplevel):
     def __init__(self, parent, controlador):
         super().__init__(parent)
-        self.parent = parent  # Guardamos la referencia de la ventana principal
+        self.parent = parent
         self.controlador = controlador
         self.title("Administración de Razas")
         self.geometry("300x350")
@@ -47,9 +47,71 @@ class VentanaConfiguracion(tk.Toplevel):
                 self.entry_hmin.get(), self.entry_hmax.get()
             )
             messagebox.showinfo("Éxito", "Raza guardada.")
-            # ¡MAGIA AQUÍ! Le pedimos a la ventana principal que se actualice
             self.parent.actualizar_razas()
             self.destroy()
+        except Exception as e:
+            messagebox.showerror("Error", str(e))
+
+
+class VentanaModificarMascota(tk.Toplevel):
+    def __init__(self, parent, controlador):
+        super().__init__(parent)
+        self.parent = parent
+        self.controlador = controlador
+        self.title("Modificar Mascota")
+        self.geometry("300x250")
+        self.grab_set()
+
+        ttk.Label(self, text="Seleccionar Mascota:").pack(pady=10)
+        self.combo_mascotas = ttk.Combobox(self, state="readonly", width=25)
+        self.combo_mascotas.pack(pady=5)
+
+        self.combo_mascotas.bind("<<ComboboxSelected>>", self.limpiar_casillas)
+
+        ttk.Label(self, text="Nuevo Peso (kg):").pack(pady=5)
+        self.entry_peso = ttk.Entry(self)
+        self.entry_peso.pack()
+
+        ttk.Label(self, text="Nueva Edad (años):").pack(pady=5)
+        self.entry_edad = ttk.Entry(self)
+        self.entry_edad.pack()
+
+        ttk.Button(self, text="Guardar Cambios", command=self.guardar_cambios).pack(pady=20)
+
+        self.cargar_mascotas()
+
+    def cargar_mascotas(self):
+        nombres = self.controlador.obtener_lista_mascotas()
+        self.combo_mascotas["values"] = nombres
+        if nombres:
+            self.combo_mascotas.current(0)
+            self.limpiar_casillas()  # Aseguramos que inicie en blanco
+
+    def limpiar_casillas(self, event=None):
+        """Borra el contenido de las casillas para que queden limpias al cambiar de mascota."""
+        self.entry_peso.delete(0, tk.END)
+        self.entry_edad.delete(0, tk.END)
+
+    def guardar_cambios(self):
+        seleccion = self.combo_mascotas.get()
+        if not seleccion:
+            messagebox.showwarning("Atención", "Selecciona una mascota primero.")
+            return
+
+        # Validación de que las casillas no estén vacías
+        if not self.entry_peso.get() or not self.entry_edad.get():
+            messagebox.showerror("Error", "No puedes dejar las casillas en blanco.")
+            return
+
+        try:
+            peso = float(self.entry_peso.get())
+            edad = int(self.entry_edad.get())
+            self.controlador.actualizar_datos_mascota(seleccion, peso, edad)
+            messagebox.showinfo("Éxito", "Datos de la mascota actualizados correctamente.")
+            self.parent.actualizar_lista_mascotas()
+            self.destroy()
+        except ValueError:
+            messagebox.showerror("Error", "Asegúrate de ingresar números válidos para peso y edad.")
         except Exception as e:
             messagebox.showerror("Error", str(e))
 
@@ -59,8 +121,8 @@ class VentanaPrincipal(tk.Tk):
         super().__init__()
         self.controlador = ControladorAplicacion()
         self.title("Sistema de Monitoreo de Mascotas")
-        self.geometry("550x650")  # Ventana más alta para que quepa todo
-        self.simulando = False  # Bandera para controlar el bucle
+        self.geometry("550x680")
+        self.simulando = False
 
         # --- PANEL SUPERIOR: Configuración ---
         frame_top = ttk.Frame(self)
@@ -73,30 +135,33 @@ class VentanaPrincipal(tk.Tk):
 
         ttk.Label(frame_registro, text="Especie:").grid(row=0, column=0, padx=5, pady=5, sticky="e")
         self.combo_especie = ttk.Combobox(frame_registro, values=["perro", "gato"], state="readonly")
-        self.combo_especie.grid(row=0, column=1, padx=5, pady=5)
+        self.combo_especie.grid(row=0, column=1, padx=5, pady=5, sticky="w")
         self.combo_especie.bind("<<ComboboxSelected>>", self.actualizar_razas)
 
         ttk.Label(frame_registro, text="Raza:").grid(row=1, column=0, padx=5, pady=5, sticky="e")
         self.combo_raza = ttk.Combobox(frame_registro, state="readonly")
-        self.combo_raza.grid(row=1, column=1, padx=5, pady=5)
+        self.combo_raza.grid(row=1, column=1, padx=5, pady=5, sticky="w")
+
+        self.combo_especie.current(0)
+        self.actualizar_razas()
 
         ttk.Label(frame_registro, text="Nombre:").grid(row=2, column=0, padx=5, pady=5, sticky="e")
         self.entry_nombre = ttk.Entry(frame_registro)
-        self.entry_nombre.grid(row=2, column=1, padx=5, pady=5)
+        self.entry_nombre.grid(row=2, column=1, padx=5, pady=5, sticky="w")
         self.entry_nombre.bind("<FocusOut>", self.verificar_nombre)
 
         self.label_apellido = ttk.Label(frame_registro, text="¡Nombre en uso! Añade un Apellido:")
         self.entry_apellido = ttk.Entry(frame_registro)
 
-        ttk.Label(frame_registro, text="Peso/Edad:").grid(row=4, column=0, padx=5, pady=5, sticky="e")
-        frame_pe = ttk.Frame(frame_registro)
-        frame_pe.grid(row=4, column=1, sticky="w")
-        self.entry_peso = ttk.Entry(frame_pe, width=7)
-        self.entry_peso.pack(side=tk.LEFT, padx=2)
-        self.entry_edad = ttk.Entry(frame_pe, width=7)
-        self.entry_edad.pack(side=tk.LEFT, padx=2)
+        ttk.Label(frame_registro, text="Peso (kg):").grid(row=4, column=0, padx=5, pady=5, sticky="e")
+        self.entry_peso = ttk.Entry(frame_registro)
+        self.entry_peso.grid(row=4, column=1, padx=5, pady=5, sticky="w")
 
-        ttk.Button(frame_registro, text="Registrar", command=self.registrar).grid(row=5, column=0, columnspan=2,
+        ttk.Label(frame_registro, text="Edad (años):").grid(row=5, column=0, padx=5, pady=5, sticky="e")
+        self.entry_edad = ttk.Entry(frame_registro)
+        self.entry_edad.grid(row=5, column=1, padx=5, pady=5, sticky="w")
+
+        ttk.Button(frame_registro, text="Registrar", command=self.registrar).grid(row=6, column=0, columnspan=2,
                                                                                   pady=10)
 
         # --- PANEL INFERIOR: Monitoreo Simulado ---
@@ -104,9 +169,17 @@ class VentanaPrincipal(tk.Tk):
         frame_monitoreo.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
 
         ttk.Label(frame_monitoreo, text="Seleccionar Mascota:").pack(pady=5)
-        self.combo_mascotas = ttk.Combobox(frame_monitoreo, state="readonly")
-        self.combo_mascotas.pack()
-        self.actualizar_lista_mascotas()  # Llenar al inicio
+
+        frame_combo_mascotas = ttk.Frame(frame_monitoreo)
+        frame_combo_mascotas.pack()
+
+        self.combo_mascotas = ttk.Combobox(frame_combo_mascotas, state="readonly", width=25)
+        self.combo_mascotas.pack(side=tk.LEFT, padx=5)
+
+        ttk.Button(frame_combo_mascotas, text="Modificar", command=self.abrir_modificar_mascota).pack(side=tk.LEFT,
+                                                                                                         padx=5)
+
+        self.actualizar_lista_mascotas()
 
         frame_botones_sim = ttk.Frame(frame_monitoreo)
         frame_botones_sim.pack(pady=10)
@@ -124,6 +197,9 @@ class VentanaPrincipal(tk.Tk):
     def abrir_configuracion(self):
         VentanaConfiguracion(self, self.controlador)
 
+    def abrir_modificar_mascota(self):
+        VentanaModificarMascota(self, self.controlador)
+
     def actualizar_razas(self, event=None):
         especie = self.combo_especie.get()
         if not especie: return
@@ -132,7 +208,7 @@ class VentanaPrincipal(tk.Tk):
         if razas:
             self.combo_raza.current(0)
         else:
-            self.combo_raza.set("Genérico")
+            self.combo_raza.set("Criollo")
 
     def actualizar_lista_mascotas(self):
         nombres = self.controlador.obtener_lista_mascotas()
@@ -146,7 +222,7 @@ class VentanaPrincipal(tk.Tk):
         if nombre and especie:
             if self.controlador.verificar_nombre_existente(nombre, especie):
                 self.label_apellido.grid(row=3, column=0, padx=5, pady=5, sticky="e")
-                self.entry_apellido.grid(row=3, column=1, padx=5, pady=5)
+                self.entry_apellido.grid(row=3, column=1, padx=5, pady=5, sticky="w")
             else:
                 self.label_apellido.grid_remove()
                 self.entry_apellido.grid_remove()
@@ -159,9 +235,8 @@ class VentanaPrincipal(tk.Tk):
                 self.combo_raza.get(), self.entry_apellido.get()
             )
             messagebox.showinfo("Éxito", "Mascota guardada.")
-            self.actualizar_lista_mascotas()  # Actualizamos la lista del panel de monitoreo al instante
+            self.actualizar_lista_mascotas()
 
-            # Limpiar
             self.entry_nombre.delete(0, tk.END)
             self.entry_apellido.delete(0, tk.END)
             self.entry_peso.delete(0, tk.END)
@@ -171,7 +246,6 @@ class VentanaPrincipal(tk.Tk):
         except Exception as e:
             messagebox.showerror("Error", str(e))
 
-    # --- LÓGICA DE SIMULACIÓN ASÍNCRONA ---
     def iniciar_simulacion(self):
         if not self.combo_mascotas.get():
             messagebox.showwarning("Atención", "Primero debes registrar o seleccionar una mascota.")
@@ -180,7 +254,7 @@ class VentanaPrincipal(tk.Tk):
         self.simulando = True
         self.btn_iniciar.config(state=tk.DISABLED)
         self.btn_detener.config(state=tk.NORMAL)
-        self.combo_mascotas.config(state=tk.DISABLED)  # Evitamos cambiar de mascota en medio del monitoreo
+        self.combo_mascotas.config(state=tk.DISABLED)
         self.ciclo_simulacion()
 
     def detener_simulacion(self):
@@ -192,7 +266,7 @@ class VentanaPrincipal(tk.Tk):
 
     def ciclo_simulacion(self):
         if not self.simulando:
-            return  # Rompe el bucle si se presionó detener
+            return
 
         nombre = self.combo_mascotas.get()
         mediciones, eval = self.controlador.simular_monitoreo(nombre)
@@ -207,5 +281,4 @@ class VentanaPrincipal(tk.Tk):
             texto += "ESTADO: ¡ALERTA AMBIENTAL!"
             self.lbl_resultado.config(text=texto, fg="red")
 
-        # Vuelve a ejecutar esta misma función después de 3000ms (3 segundos)
         self.after(3000, self.ciclo_simulacion)

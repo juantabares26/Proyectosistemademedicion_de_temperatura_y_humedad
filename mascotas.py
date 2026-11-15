@@ -1,56 +1,41 @@
 import json
 import os
 
-
 class GestorMascotas:
     def __init__(self, archivo="mascotas.json"):
-        self.__archivo = archivo
-        self.__mascotas = self.cargar_mascotas()
+        self.archivo = archivo
+        self._inicializar_archivo()
 
-    def cargar_mascotas(self):
-        if not os.path.exists(self.__archivo):
-            return []
-
-        try:
-            with open(self.__archivo, "r", encoding="utf-8") as archivo:
-                datos = json.load(archivo)
-
-            if not isinstance(datos, list):
-                raise ValueError("El archivo de mascotas tiene un formato incorrecto.")
-
-            return datos
-
-        except json.JSONDecodeError as error:
-            raise ValueError("El archivo JSON está dañado.") from error
-
-    def guardar_mascotas(self):
-        with open(self.__archivo, "w", encoding="utf-8") as archivo:
-            json.dump(
-                self.__mascotas,
-                archivo,
-                ensure_ascii=False,
-                indent=4
-            )
-
-    def buscar_por_nombre(self, nombre, tipo=None):
-        for mascota in self.__mascotas:
-            if mascota["nombre"].casefold() == nombre.casefold():
-                if tipo is None or mascota["tipo"] == tipo:
-                    return mascota
-
-        return None
-
-    def registrar_mascota(self, animal):
-        if self.buscar_por_nombre(
-                animal.get_nombre(),
-                animal.tipo_animal()
-        ) is not None:
-            raise ValueError(
-                "Ya existe una mascota de esa especie con ese nombre."
-            )
-
-        self.__mascotas.append(animal.obtener_datos())
-        self.guardar_mascotas()
+    def _inicializar_archivo(self):
+        if not os.path.exists(self.archivo):
+            with open(self.archivo, "w") as f:
+                json.dump([], f)
 
     def listar_mascotas(self):
-        return self.__mascotas.copy()
+        with open(self.archivo, "r") as f:
+            return json.load(f)
+
+    def buscar_por_nombre(self, nombre, especie=None):
+        for m in self.listar_mascotas():
+            if m["nombre"] == nombre:
+                if especie and m["tipo"] != especie:
+                    continue
+                return m
+        return None
+
+    def registrar_mascota(self, mascota):
+        datos = self.listar_mascotas()
+        datos.append(mascota.obtener_datos())
+        with open(self.archivo, "w") as f:
+            json.dump(datos, f, indent=4)
+
+    def actualizar_mascota(self, nombre, nuevo_peso, nueva_edad):
+        """Busca una mascota por nombre, actualiza su peso y edad, y guarda los cambios."""
+        datos = self.listar_mascotas()
+        for m in datos:
+            if m["nombre"] == nombre:
+                m["peso"] = nuevo_peso
+                m["edad"] = nueva_edad
+                break
+        with open(self.archivo, "w") as f:
+            json.dump(datos, f, indent=4)
