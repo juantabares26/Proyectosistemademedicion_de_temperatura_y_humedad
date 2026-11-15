@@ -2,8 +2,8 @@
     {
         "tipo": "perro",
         "nombre": "flavio",
-        "peso": 16.0,
-        "edad": 4
+        "peso": 25.0,
+        "edad": 12
     },
     {
         "tipo": "gato",
@@ -19,16 +19,30 @@
     },
     {
         "tipo": "gato",
-        "raza": "Genérico",
+        "raza": "Gen\u00c3\u00a9rico",
         "nombre": "julien",
         "peso": 1.2,
         "edad": 3
     },
     {
         "tipo": "perro",
-        "raza": "Genérico",
+        "raza": "Gen\u00c3\u00a9rico",
         "nombre": "julian",
         "peso": 24.0,
         "edad": 5
+    },
+    {
+        "tipo": "perro",
+        "raza": "Galgo",
+        "nombre": "kyllian",
+        "peso": 12.0,
+        "edad": 6
+    },
+    {
+        "tipo": "perro",
+        "raza": "Gen\u00c3\u00a9rico",
+        "nombre": "flavio caramelo",
+        "peso": 24.0,
+        "edad": 12
     }
 ]
