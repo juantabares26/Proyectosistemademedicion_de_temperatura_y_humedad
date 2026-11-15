@@ -23,5 +23,12 @@
         "nombre": "julien",
         "peso": 1.2,
         "edad": 3
+    },
+    {
+        "tipo": "perro",
+        "raza": "Genérico",
+        "nombre": "julian",
+        "peso": 24.0,
+        "edad": 5
     }
 ]
