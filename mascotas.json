@@ -44,5 +44,12 @@
         "nombre": "flavio caramelo",
         "peso": 24.0,
         "edad": 12
+    },
+    {
+        "tipo": "gato",
+        "raza": "Criollo",
+        "nombre": "Silvia",
+        "peso": 11.0,
+        "edad": 6
     }
 ]

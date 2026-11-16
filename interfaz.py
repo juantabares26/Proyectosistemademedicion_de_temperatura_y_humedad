@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 import shutil
+import os
 from controlador import ControladorAplicacion
 
 
@@ -12,6 +13,14 @@ class VentanaConfiguracion(tk.Toplevel):
         self.title("Añadir Raza")
         self.geometry("300x350")
         self.grab_set()
+
+        # Adquiere el color de fondo de la ventana principal para coincidir con el modo actual
+        self.configure(bg=parent.cget("bg"))
+
+        try:
+            self.iconbitmap("huella.ico")
+        except:
+            pass
 
         ttk.Label(self, text="Especie:").pack(pady=5)
 
@@ -67,6 +76,13 @@ class VentanaModificarRaza(tk.Toplevel):
         self.title("Modificar Raza")
         self.geometry("300x420")
         self.grab_set()
+
+        self.configure(bg=parent.cget("bg"))
+
+        try:
+            self.iconbitmap("huella.ico")
+        except:
+            pass
 
         ttk.Label(self, text="Especie:").pack(pady=5)
         frame_radio = ttk.Frame(self)
@@ -162,6 +178,13 @@ class VentanaModificarMascota(tk.Toplevel):
         self.geometry("300x250")
         self.grab_set()
 
+        self.configure(bg=parent.cget("bg"))
+
+        try:
+            self.iconbitmap("huella.ico")
+        except:
+            pass
+
         ttk.Label(self, text="Seleccionar Mascota:").pack(pady=10)
         self.combo_mascotas = ttk.Combobox(self, state="readonly", width=25)
         self.combo_mascotas.pack(pady=5)
@@ -213,11 +236,28 @@ class VentanaPrincipal(tk.Tk):
         super().__init__()
         self.controlador = ControladorAplicacion()
         self.title("Sistema de Monitoreo de Mascotas")
-        self.geometry("570x640")  # Ligeramente más ancha para que quepa el nuevo botón
+        self.geometry("570x680")
         self.simulando = False
+
+        # Variable para controlar el tema (Inicia en Claro)
+        self.modo_oscuro = False
+
+        try:
+            self.iconbitmap("huella.ico")
+        except:
+            pass
 
         self.crear_menu()
 
+        # --- BOTÓN PARA CAMBIAR EL MODO OSCURO ---
+        frame_top = ttk.Frame(self)
+        frame_top.pack(fill=tk.X, padx=10, pady=5)
+
+        self.btn_tema = ttk.Button(frame_top, text="🌙 Modo Oscuro", command=self.toggle_tema)
+        self.btn_tema.pack(side=tk.LEFT)
+        # ----------------------------------------
+
+        # --- PANEL CENTRAL: Registrar nueva mascota ---
         frame_registro = ttk.LabelFrame(self, text="1. Registrar Mascota")
         frame_registro.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
@@ -241,7 +281,6 @@ class VentanaPrincipal(tk.Tk):
         self.combo_raza = ttk.Combobox(frame_botones_raza, state="readonly", width=15)
         self.combo_raza.pack(side=tk.LEFT)
 
-        # --- LOS 3 BOTONES DE RAZA JUNTOS ---
         ttk.Button(frame_botones_raza, text="✏️ Modificar", command=self.abrir_modificar_raza).pack(side=tk.LEFT,
                                                                                                     padx=2)
         ttk.Button(frame_botones_raza, text="🗑️ Borrar", command=self.eliminar_raza_seleccionada).pack(side=tk.LEFT,
@@ -269,6 +308,7 @@ class VentanaPrincipal(tk.Tk):
         ttk.Button(frame_registro, text="Registrar Mascota", command=self.registrar).grid(row=6, column=0, columnspan=2,
                                                                                           pady=10)
 
+        # --- PANEL INFERIOR: Monitoreo Simulado ---
         frame_monitoreo = ttk.LabelFrame(self, text="2. Monitoreo Ambiental (Simulación)")
         frame_monitoreo.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
@@ -295,6 +335,58 @@ class VentanaPrincipal(tk.Tk):
         self.lbl_resultado = tk.Label(frame_monitoreo, text="Esperando...", font=("Arial", 11), bg="black", fg="lime",
                                       width=40, height=4)
         self.lbl_resultado.pack(pady=5)
+
+        # Aplicar el tema inicial (Modo claro por defecto)
+        self.aplicar_tema()
+
+    # --- FUNCIONES DEL TEMA (MODO OSCURO/CLARO) ---
+    def toggle_tema(self):
+        self.modo_oscuro = not self.modo_oscuro
+        self.aplicar_tema()
+
+    def aplicar_tema(self):
+        style = ttk.Style()
+        # Usamos el tema 'clam' porque permite modificar colores de forma limpia
+        if 'clam' in style.theme_names():
+            style.theme_use('clam')
+
+        if self.modo_oscuro:
+            # Colores Modo Oscuro
+            bg_color = "#2b2b2b"
+            fg_color = "#ffffff"
+            btn_bg = "#404040"
+            btn_fg = "#ffffff"
+            field_bg = "#555555"
+            self.btn_tema.config(text="☀️ Modo Claro")
+        else:
+            # Colores Modo Claro
+            bg_color = "#f0f0f0"
+            fg_color = "#000000"
+            btn_bg = "#e0e0e0"
+            btn_fg = "#000000"
+            field_bg = "#ffffff"
+            self.btn_tema.config(text="🌙 Modo Oscuro")
+
+        # Fondo principal
+        self.configure(bg=bg_color)
+
+        # Configuración global de estilos
+        style.configure(".", background=bg_color, foreground=fg_color)
+        style.configure("TFrame", background=bg_color)
+        style.configure("TLabel", background=bg_color, foreground=fg_color)
+        style.configure("TLabelframe", background=bg_color, foreground=fg_color)
+        style.configure("TLabelframe.Label", background=bg_color, foreground=fg_color)
+        style.configure("TRadiobutton", background=bg_color, foreground=fg_color)
+
+        style.configure("TButton", background=btn_bg, foreground=btn_fg)
+        style.configure("TEntry", fieldbackground=field_bg, foreground=fg_color)
+        style.configure("TCombobox", fieldbackground=field_bg, foreground=fg_color)
+
+        # Color del botón al pasar el mouse por encima
+        style.map("TButton", background=[("active", "#666666" if self.modo_oscuro else "#d0d0d0")])
+        style.map("TCombobox", fieldbackground=[("readonly", field_bg)], foreground=[("readonly", fg_color)])
+
+    # ---------------------------------------------
 
     def crear_menu(self):
         barra_menu = tk.Menu(self)
@@ -336,11 +428,11 @@ class VentanaPrincipal(tk.Tk):
         respuesta = messagebox.askyesno("Confirmar",
                                         f"¿Estás seguro de que deseas eliminar permanentemente la raza '{raza}'?")
 
-        if respuesta:  # Si el usuario presiona "Sí"
+        if respuesta:
             try:
                 self.controlador.eliminar_raza(self.var_especie.get(), raza)
                 messagebox.showinfo("Éxito", f"La raza '{raza}' ha sido eliminada.")
-                self.actualizar_razas()  # Refrescamos el combobox
+                self.actualizar_razas()
             except Exception as e:
                 messagebox.showerror("Error", f"No se pudo eliminar la raza:\n{str(e)}")
 
