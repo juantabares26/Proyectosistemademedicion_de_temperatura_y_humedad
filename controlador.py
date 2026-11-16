@@ -17,7 +17,6 @@ class ControladorAplicacion:
         return self.gestor_razas.obtener_razas(especie)
 
     def obtener_lista_mascotas(self):
-        # AHORA FORMATEAMOS EL TEXTO: "Nombre - especie"
         mascotas = self.gestor_mascotas.listar_mascotas()
         return [f"{m['nombre']} - {m['tipo']}" for m in mascotas]
 
@@ -45,24 +44,29 @@ class ControladorAplicacion:
         self.gestor_razas.agregar_raza(especie, raza, t_min, t_max, h_min, h_max)
 
     def actualizar_datos_mascota(self, nombre_formateado, peso, edad):
-        # Extraemos el nombre original cortando por el guión ("Firulais - perro" -> "Firulais")
         nombre = nombre_formateado.rsplit(" - ", 1)[0]
         self.gestor_mascotas.actualizar_mascota(nombre, peso, edad)
 
     def simular_monitoreo(self, nombre_formateado):
-        # Extraemos el nombre original antes de buscar en la base de datos
         nombre = nombre_formateado.rsplit(" - ", 1)[0]
-
         datos = self.gestor_mascotas.buscar_por_nombre(nombre)
         if not datos:
             raise ValueError("Mascota no encontrada en el sistema.")
 
         if datos["tipo"] == "perro":
-            animal = Perro(datos["nombre"], datos["peso"], datos["edad"], datos.get("raza", "Criollo"))
+            animal = Perro(datos["nombre"], datos["peso"], datos["edad"], datos.get("raza", "Genérico"))
         else:
-            animal = Gato(datos["nombre"], datos["peso"], datos["edad"], datos.get("raza", "Criollo"))
+            animal = Gato(datos["nombre"], datos["peso"], datos["edad"], datos.get("raza", "Genérico"))
 
         mediciones = self.sensor.leer_mediciones()
         evaluacion = self.evaluador.evaluar_ambiente(animal, mediciones)
-
         return mediciones, evaluacion
+
+    def obtener_datos_raza(self, especie, raza):
+        return self.gestor_razas.obtener_datos_raza(especie, raza)
+
+    def modificar_raza(self, especie, raza_antigua, nuevo_nombre_raza, t_min, t_max, h_min, h_max):
+        self.gestor_razas.actualizar_raza(especie, raza_antigua, nuevo_nombre_raza, t_min, t_max, h_min, h_max)
+
+    def eliminar_raza(self, especie, raza):
+        self.gestor_razas.eliminar_raza(especie, raza)

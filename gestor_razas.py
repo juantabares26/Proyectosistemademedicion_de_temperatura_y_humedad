@@ -1,93 +1,67 @@
+import openpyxl
 import os
-from openpyxl import Workbook, load_workbook
 
 
 class GestorRazas:
-    def __init__(self, archivo="parametros_razas.xlsx"):
+    def __init__(self, archivo="razas.xlsx"):
         self.archivo = archivo
         self._inicializar_archivo()
 
     def _inicializar_archivo(self):
-        """Crea el archivo Excel con sus hojas y encabezados si no existe."""
         if not os.path.exists(self.archivo):
-            wb = Workbook()
-
-            # Crear hoja para Perros
+            wb = openpyxl.Workbook()
             ws_perros = wb.active
             ws_perros.title = "perro"
-            ws_perros.append(["Raza", "Temp_Min", "Temp_Max", "Humedad_Min", "Humedad_Max"])
+            ws_perros.append(["Raza", "T_Min", "T_Max", "H_Min", "H_Max"])
 
-            # Crear hoja para Gatos
             ws_gatos = wb.create_sheet(title="gato")
-            ws_gatos.append(["Raza", "Temp_Min", "Temp_Max", "Humedad_Min", "Humedad_Max"])
-
-            # Añadimos una raza "Genérica" por defecto para que no esté vacío
-            ws_perros.append(["Criollo", 18, 26, 30, 70])
-            ws_gatos.append(["Criollo", 20, 26, 30, 70])
+            ws_gatos.append(["Raza", "T_Min", "T_Max", "H_Min", "H_Max"])
 
             wb.save(self.archivo)
 
-    def obtener_razas(self, especie):
-        """Devuelve una lista con los nombres de las razas registradas para una especie."""
-        especie = especie.lower()
-        wb = load_workbook(self.archivo, read_only=True)
-
-        if especie not in wb.sheetnames:
-            return []
-
+    def agregar_raza(self, especie, raza, t_min, t_max, h_min, h_max):
+        wb = openpyxl.load_workbook(self.archivo)
         ws = wb[especie]
-        razas = []
-
-        # Leer desde la fila 2 (evitando encabezados)
-        for fila in ws.iter_rows(min_row=2, values_only=True):
-            if fila[0]:  # Si la celda de la raza tiene texto
-                razas.append(fila[0])
-
-        wb.close()
-        return razas
-
-    def obtener_rango_raza(self, especie, raza):
-        """Devuelve un diccionario con los rangos de temp y humedad de una raza."""
-        especie = especie.lower()
-        wb = load_workbook(self.archivo, read_only=True)
-
-        if especie not in wb.sheetnames:
-            return None
-
-        ws = wb[especie]
-        for fila in ws.iter_rows(min_row=2, values_only=True):
-            # Comparamos ignorando mayúsculas y minúsculas
-            if fila[0] and fila[0].casefold() == raza.casefold():
-                rango = {
-                    "temperatura": (fila[1], fila[2]),
-                    "humedad": (fila[3], fila[4])
-                }
-                wb.close()
-                return rango
-
-        wb.close()
-        return None  # Si no encuentra la raza
-
-    def agregar_raza(self, especie, raza, temp_min, temp_max, hum_min, hum_max):
-        """Agrega una nueva raza y sus parámetros a la hoja correspondiente."""
-        especie = especie.lower()
-
-        # Abrimos el archivo en modo escritura (sin read_only)
-        wb = load_workbook(self.archivo)
-
-        if especie not in wb.sheetnames:
-            wb.close()
-            raise ValueError("Especie no válida. Debe ser 'perro' o 'gato'.")
-
-        ws = wb[especie]
-
-        # Verificar si la raza ya existe para no duplicarla
-        for fila in ws.iter_rows(min_row=2, values_only=True):
-            if fila[0] and fila[0].casefold() == raza.casefold():
-                wb.close()
-                raise ValueError("Esta raza ya está registrada en el sistema.")
-
-        # Agregar la nueva fila al final
-        ws.append([raza, float(temp_min), float(temp_max), float(hum_min), float(hum_max)])
+        ws.append([raza, float(t_min), float(t_max), float(h_min), float(h_max)])
         wb.save(self.archivo)
-        wb.close()
+
+    def obtener_razas(self, especie):
+        wb = openpyxl.load_workbook(self.archivo)
+        ws = wb[especie]
+        return [row[0] for row in ws.iter_rows(min_row=2, values_only=True) if row[0] is not None]
+
+    def obtener_datos_raza(self, especie, raza):
+        wb = openpyxl.load_workbook(self.archivo)
+        ws = wb[especie]
+        for row in ws.iter_rows(min_row=2, values_only=True):
+            if row[0] == raza:
+                return {"t_min": row[1], "t_max": row[2], "h_min": row[3], "h_max": row[4]}
+        return None
+
+    def actualizar_raza(self, especie, raza_antigua, nuevo_nombre_raza, t_min, t_max, h_min, h_max):
+        wb = openpyxl.load_workbook(self.archivo)
+        ws = wb[especie]
+        for fila in ws.iter_rows(min_row=2):
+            if fila[0].value == raza_antigua:
+                fila[0].value = nuevo_nombre_raza
+                fila[1].value = float(t_min)
+                fila[2].value = float(t_max)
+                fila[3].value = float(h_min)
+                fila[4].value = float(h_max)
+                break
+        wb.save(self.archivo)
+
+    def eliminar_raza(self, especie, raza):
+        """Busca la fila correspondiente a la raza y la elimina permanentemente del Excel."""
+        wb = openpyxl.load_workbook(self.archivo)
+        ws = wb[especie]
+        fila_a_eliminar = None
+
+        for row in range(2, ws.max_row + 1):
+            if ws.cell(row=row, column=1).value == raza:
+                fila_a_eliminar = row
+                break
+
+        if fila_a_eliminar:
+            ws.delete_rows(fila_a_eliminar, 1)  # Borra 1 fila a partir del índice encontrado
+            wb.save(self.archivo)

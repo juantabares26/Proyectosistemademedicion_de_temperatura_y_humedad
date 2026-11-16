@@ -1,4 +1,3 @@
-# main.py
 from errores import ejecutar_sin_cortes
 from sistema import iniciar_monitoreo
 from interfaz import VentanaPrincipal

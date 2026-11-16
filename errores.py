@@ -9,7 +9,6 @@ def ejecutar_sin_cortes(funcion_principal):
         try:
             funcion_principal()
 
-            # Al finalizar con éxito, en lugar de romper el ciclo, pausamos y preguntamos:
             print("\n" + "=" * 40)
             opcion = input(
                 "[SISTEMA]: Monitoreo finalizado. Presione ENTER para volver al menú principal, o escriba 'salir' para cerrar: ").strip().lower()
@@ -18,7 +17,6 @@ def ejecutar_sin_cortes(funcion_principal):
                 print("\nCerrando el sistema... ¡Hasta luego!\n")
                 sys.exit(0)  # Cierra el programa limpiamente
 
-            # Si presiona ENTER (o cualquier otra cosa), el 'while True' vuelve a iniciar
 
         except (ValueError, TypeError) as error:
             print(f"\n[ERROR EN LOS DATOS]: {error}")
